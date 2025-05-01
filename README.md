@@ -37,7 +37,7 @@ Install prerequisites software packages before execution
 
 
 5. **Open the dashboard**  
-   → Double-click `index.html` or open it in a browser
+   → Double-click `index.html` or  In a browser, go to: http://localhost:3000/infra
 
 ---
 
