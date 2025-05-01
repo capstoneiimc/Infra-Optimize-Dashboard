@@ -12,14 +12,15 @@ In this project:
 
 STEPS TO EXECUTE ON LINUX AND WINDOWS:
 
-## ⚙ Prerequisites to be installed
+## ⚙ Prerequisites to be installed 
 
 - Node.js 18+ installed  
 - NPM installed
 
-
-
 ## ✅ Windows Steps
+Install prerequisites software packages before execution
+1️⃣ Download Node.js .msi installer from https://nodejs.org/en
+2️⃣ Run the installer → it automatically installs both Node.js + NPM
 
 1. **Open Command Prompt**  
    → Press `Win + R`, type `cmd`, press Enter
