@@ -26,7 +26,7 @@ Install prerequisites software packages before execution
    → Press `Win + R`, type `cmd`, press Enter
 
 2. **Go to project folder**  
-   cd path\to\infra-optimize-dashboard
+   cd path\to\cloudinary_dashboard_infra_optimize_1
 
 
 3. **Install dependencies**  
@@ -47,7 +47,7 @@ Install prerequisites software packages before execution
    → Press `Ctrl + Alt + T`
 
 2. **Go to project folder**  
-   cd /path/to/infra-optimize-dashboard
+   cd /path/to/cloudinary_dashboard_infra_optimize_1
 
 3. **Make start script executable**  
    chmod +x start_server.sh
