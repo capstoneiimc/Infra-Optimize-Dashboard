@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cloudinary Tender Dashboard (Local)</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    .badge { padding: 5px 8px; border-radius: 5px; color: white; font-size: 0.9em; }
+    .pdf { background-color: #d9534f; }
+    .doc { background-color: #0275d8; }
+    .image { background-color: #5cb85c; }
+    .video { background-color: #f0ad4e; }
+  </style>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f9f9f9; color: #333;"><h1 style="color: #007BFF;">🐬 Infra Optimize Dashboard</h1><p style="margin-top:-10px; font-size:14px; color:#555;">Optimize, track, and manage infrastructure documents from Cloud.</p><input type="text" id="searchInput" placeholder="Search files..." oninput="searchFiles()" style="padding:5px; margin-bottom:10px; width:200px;"> <div id="summary" style="margin:10px 0; font-weight:bold;"></div>
+
+<h1>📑 Tender Documents (Local Secure)</h1>
+
+<input type="text" id="searchInput" placeholder="Search files..." oninput="searchFiles()"> <button onclick="sortFiles()">Sort by Size</button><br><table>
+  <thead><tr><th>Filename</th><th>Type</th><th>Resource Type</th><th>Size</th><th>Action</th></tr></thead>
+  <tbody id="fileTable">
+    <!-- Files will be inserted here -->
+  </tbody>
+</table>
+
+
+
+
+
+
+
+<script>
+let allFiles = [];
+let sortAscending = true;
+
+async function fetchFiles() {
+    console.log('Starting fetchFiles...');
+    try {
+        const response = await fetch('/list-files');
+        if (!response.ok) {
+            console.error('Server error:', response.status);
+            showError('⚠ Could not load files. Please try again later.');
+            return;
+        }
+        let data;
+        try {
+            data = await response.json();
+        } catch (err) {
+            console.error('Failed to parse JSON:', err);
+            showError('⚠ Failed to parse server response.');
+            return;
+        }
+        console.log('Files:', data);
+        allFiles = data || [];
+        renderFiles(allFiles);
+    } catch (err) {
+        console.error('Error fetching or parsing files:', err);
+        showError('⚠ Network error. Please check connection.');
+    }
+}
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function getBadge(file) {
+    const ext = file.public_id.split('.').pop().toLowerCase();
+    let color = 'gray';
+    let icon = '📄';
+    if (ext === 'zip') { color = 'orange'; icon = '📦'; }
+    else if (ext === 'dwg') { color = 'green'; icon = '📐'; }
+    else if (ext === 'xlsx') { color = 'blue'; icon = '📊'; }
+    else if (ext === 'pptx') { color = 'purple'; icon = '📽'; }
+    else if (ext === 'pdf') { color = 'red'; icon = '📄'; }
+    return `<span style="background-color:${color}; color:white; padding:2px 6px; border-radius:4px;">${icon} .${ext}</span>`;
+}
+
+function renderFiles(files) {
+    const table = document.getElementById('fileTable');
+    const summary = document.getElementById('summary');
+    table.innerHTML = '';
+    if (files.length === 0) {
+        table.innerHTML = '<tr><td colspan="5">No files found.</td></tr>';
+        summary.textContent = 'Total files: 0 | Total size: 0 B';
+        return;
+    }
+    let totalSize = 0;
+    files.forEach(file => {
+        totalSize += file.bytes;
+        const row = document.createElement('tr');
+        const rowClass = file.bytes > 10 * 1024 * 1024 ? 'style="background-color: #ffe6e6;"' : '';
+        row.innerHTML = `
+            <tr ${rowClass}>
+                <td>${file.display_name || file.public_id}</td>
+                <td>${getBadge(file)}</td>
+                <td>${file.resource_type}</td>
+                <td>${formatSize(file.bytes)}</td>
+                <td><a href="${file.url}" target="_blank" style="color: #007BFF;">Download</a></td>
+            </tr>`;
+        table.appendChild(row);
+    });
+    summary.textContent = 'Total files: ' + files.length + ' | Total size: ' + formatSize(totalSize);
+}
+
+function searchFiles() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allFiles.filter(file =>
+        (file.display_name || file.public_id).toLowerCase().includes(query) ||
+        (file.resource_type && file.resource_type.toLowerCase().includes(query)) ||
+        file.public_id.split('.').pop().toLowerCase().includes(query)
+    );
+    renderFiles(filtered);
+}
+
+function sortFiles() {
+    sortAscending = !sortAscending;
+    allFiles.sort((a, b) =>
+        sortAscending ? a.bytes - b.bytes : b.bytes - a.bytes
+    );
+    renderFiles(allFiles);
+}
+
+function exportCSV() {
+    let csv = 'Filename,Type,Resource Type,Size,URL\n';
+    allFiles.forEach(file => {
+        const name = (file.display_name || file.public_id).replace(/,/g, ' ');
+        const ext = file.public_id.split('.').pop().toLowerCase();
+        const type = file.resource_type;
+        const size = formatSize(file.bytes);
+        const url = file.url;
+        csv += `${name},${ext},${type},${size},${url}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'files.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function showError(message) {
+    document.getElementById('fileTable').innerHTML = '<tr><td colspan="5">' + message + '</td></tr>';
+    document.getElementById('summary').textContent = '';
+}
+
+window.onload = function() {
+    fetchFiles();
+};
+</script>
+</body>
+</html>
